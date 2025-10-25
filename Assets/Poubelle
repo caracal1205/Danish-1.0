@@ -1,0 +1,58 @@
+
+void ApplyCardEffect(Card card, Player player)
+{
+    // Utilisez (int) pour accéder à la valeur numérique de l'énumération Rank
+    int cardValue = (int)card.rank;
+    Card top = pile.Count > 1 ? pile[pile.Count - 2] : pile.Count == 1 ? pile[0] : default;
+    int topValue = (int)top.rank;
+
+    if (cardValue == 3) // Copie l'effet (si implémenté comme vous le souhaitez)
+    {
+        if (top.rank != default)
+        {
+            infoText.text = $"{player.name} copie l'effet du {top.rank}";
+            // Applique l'effet de la carte PRÉCÉDENTE au 3
+            ApplyCardEffect(top, player); 
+        }
+        else
+        {
+             // Si le 3 est joué sur une pile vide (peu probable), il ne fait rien ou agit comme un 2.
+             infoText.text = $"{player.name} joue un 3 (pas d'effet à copier)";
+        }
+    }
+    else if (cardValue == 2) // Le 2 peut se jouer sur tout, et réinitialise la valeur requise (souvent la plus basse ou tout)
+    {
+        infoText.text = $"{player.name} joue un 2 (Joker)";
+        // Le joueur suivant peut jouer n'importe quelle carte.
+    }
+    else if (cardValue == 6) // Inverse le sens (Règle standard)
+    {
+        reversedRule = !reversedRule;
+        infoText.text = $"Sens du jeu inversé par {player.name}!";
+    }
+    else if (cardValue == 7) // Oblige à jouer inférieur ou égal (l'effet est géré dans IsCardPlayable)
+    {
+        infoText.text = $"Le prochain joueur doit jouer un 7 ou moins!";
+    }
+    else if (cardValue == 8) // Tour sauté
+    {
+        infoText.text = "Tour sauté !";
+        // Passe un joueur de plus
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.Count;
+    }
+    else if (cardValue == 10) // Brûle la pile
+    {
+        infoText.text = $"{player.name} brûle la pile !";
+        // Ajoute toutes les cartes de la pile aux cartes brûlées
+        burned.AddRange(pile); 
+        pile.Clear();
+        UpdatePileVisuals();
+        // Le joueur qui brûle rejoue (standard) - nécessite de ne pas appeler NextTurn()
+        currentPlayerIndex = (currentPlayerIndex - 1 + players.Count) % players.Count; // Rejoue son tour
+        infoText.text = $"{player.name} rejoue !";
+    }
+    else if (cardValue == 14) // As : peut se jouer sur tout, valeur la plus haute.
+    {
+        infoText.text = $"{player.name} joue un As.";
+    }
+}
