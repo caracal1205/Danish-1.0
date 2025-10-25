@@ -1,6 +1,8 @@
+// CardUI.cs
 using UnityEngine;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(Button))]
 public class CardUI : MonoBehaviour
 {
     public Card card;
@@ -8,20 +10,25 @@ public class CardUI : MonoBehaviour
     public Text label;
     private GameManager gameManager;
 
-    void Start()
+    void Awake()
     {
-        gameManager = FindObjectOfType<GameManager>();
-        button.onClick.AddListener(OnClick);
+        // si tu n'as pas assigné le button/label dans l'inspector, essaie de les chercher
+        if (button == null) button = GetComponent<Button>();
+        if (label == null) label = GetComponentInChildren<Text>();
     }
 
     public void Setup(Card c)
     {
         card = c;
-        label.text = c.value + " " + c.suit;
+        if (label != null)
+            label.text = c.ToString();
+        // active le bouton par défaut (le script GameManager décidera si clickable)
+        if (button != null)
+            button.interactable = true;
     }
 
-    void OnClick()
+    public void DisableInteraction()
     {
-        gameManager.OnCardClicked(this);
+        if (button != null) button.interactable = false;
     }
 }
