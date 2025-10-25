@@ -1,17 +1,15 @@
-// Card.cs
 using System;
 
 [Serializable]
 public class Card
 {
-    // correspond à card.value et card.suit utilisés dans GameManager
-    public string suit;   // "Hearts", "Diamonds", "Clubs", "Spades"
-    public int value;     // 2..14 (11=J,12=Q,13=K,14=A)
+    public int value;  // 2..14
+    public Suit suit;  // type enum
 
-    public Card(string suit, int value)
+    public Card(int value, Suit suit)
     {
-        this.suit = suit;
         this.value = value;
+        this.suit = suit;
     }
 
     public override string ToString()
@@ -27,4 +25,12 @@ public class Card
         }
         return $"{rankStr} of {suit}";
     }
+}
+
+public enum Suit
+{
+    Hearts,    // ♥
+    Diamonds,  // ♦
+    Clubs,     // ♣
+    Spades     // ♠
 }
