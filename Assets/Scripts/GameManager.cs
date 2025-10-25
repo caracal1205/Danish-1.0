@@ -13,6 +13,11 @@ public class GameManager : MonoBehaviour
     private int currentPlayerIndex = 0;
 
     public Transform BotHandPanel;
+    public Transform playerHandPanel
+    public Transform drawPilePos;
+    public Transform discardPos;
+    public Transform burnPilePos;
+
     public GameObject cardPrefab;
     public Text pileText;
     public text infoText;
@@ -25,7 +30,8 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         StartNewGame(); 
-        SimulateGame();
+        //SimulateGame();
+        StartTurn();
     }
 
     public void StartNewGame()
@@ -33,8 +39,8 @@ public class GameManager : MonoBehaviour
         deck = Deck.CreateStandard52();
         Deck.Shuffle(deck);
 
-        playerA = new Player("Ruben");
-        playerB = new Player("Timothy");
+        player.Add(new Player("Ruben"));
+        player.Add(new Player("Timothy"));
 
         DealInitialCards(playerA);
         DealInitialCards(playerB);
@@ -44,10 +50,14 @@ public class GameManager : MonoBehaviour
         reversedRule = false;
         sameSuitRule = false;
 
-        currentPlayer = playerA;
+        pile.Add(DrawFromDeck());
+        UpdatePileText();
+
+
+        /*currentPlayer = playerA;
 
         Debug.Log("Partie de Bataille Norvégienne commencée !");
-        Debug.Log($"{playerA.Name} et {playerB.Name} ont leurs cartes.");
+        Debug.Log($"{playerA.Name} et {playerB.Name} ont leurs cartes.");*/
     }
 
     private void DealInitialCards(Player p)
@@ -61,7 +71,7 @@ public class GameManager : MonoBehaviour
         deck.RemoveRange(0, 3);
     }
 
-    private void SimulateGame()
+    /*private void SimulateGame()
     {
         int safety = 0;
         while (!playerA.HasNoCards && !playerB.HasNoCards && safety < 500)
@@ -74,9 +84,139 @@ public class GameManager : MonoBehaviour
         if (playerA.HasNoCards) Debug.Log("🎉 Alice gagne !");
         else if (playerB.HasNoCards) Debug.Log("🎉 Bob gagne !");
         else Debug.Log("Fin forcée après 500 tours (sécurité).");
+    }*/
+
+    void StartTurn()
+    {
+        Player current = player[currentPlayerIndex];
+        infoText.text = $"Tour de : {current.name}";
+
     }
 
-    private void PlayTurn(Player player)
+    void ShowPlayerHand(Player player)
+    {
+    foreach (Transform child in playerHandPanel)
+        Destroy(child.gameObject);
+
+    float spread = 20f; // angle d’éventail
+    int n = player.hand.Count;
+    float startAngle = -spread * (n - 1) / 2;
+
+    for (int i = 0; i < n; i++)
+    {
+        GameObject cardGO = Instantiate(cardPrefab, playerHandPanel);
+        CardUI ui = cardGO.GetComponent<CardUI>();
+        ui.Setup(player.hand[i]);
+
+        // Positionner en éventail
+        RectTransform rt = cardGO.GetComponent<RectTransform>();
+        rt.localRotation = Quaternion.Euler(0, 0, startAngle + spread * i);
+    }
+    }
+
+    public void OnCardClicked(CardUI clickedCard)
+    {
+        Player current = players[currentPlayer];
+        if (!IsCardPlayable(clickedCard.card))
+        {
+            infoText.text = "Carte non jouable fdp";
+            return;
+        }
+
+        current.hand.Remove(clickedCard.card);
+        pile.Add(clickedCard.card);
+        ApplyCardEffect(clickedCard.card, current);
+        DrawIfNeeded(current);
+        NextTurn();
+    }
+
+    void NextTrun()
+    {
+        UpdatePileText();
+        UpdatePileVisuals();
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.Count;
+        StartTurn();
+    }
+
+     bool IsCardPlayable(Card card)
+    {
+        if (pile.Count == 0) return true;
+        Card top = pile.Last();
+
+        // Règles de la bataille norvégienne avec tes ajouts
+        if (card.value == 3) return true; // le 3 copie
+        if (card.value == 6) return true; // restriction gérée après
+        if (top.value == 6 && card.suit != top.suit) return false;
+        return card.value >= top.value;
+    }
+
+    void ApplyCardEffect(Card card, Player player)
+    {
+        Card top = pile.Count > 1 ? pile[pile.Count - 2] : null;
+
+        if (card.value == 3 && top != null)
+        {
+            infoText.text = $"{player.name} copie l'effet du {top.value}";
+            ApplyCardEffect(top, player);
+        }
+        else if (card.value == 8)
+        {
+            infoText.text = "Tour sauté !";
+            currentPlayerIndex = (currentPlayerIndex + 1) % players.Count;
+        }
+        else if (card.value == 10)
+        {
+            infoText.text = $"{player.name} brûle la pile !";
+            pile.Clear();
+            UpdatePileVisuals();
+        }
+    }
+
+    void DrawIfNeeded(Player player)
+    {
+        while (player.hand.Count < 3 && deck.Count > 0)
+            DrawCard(player);
+    }
+
+    void DrawCard(Player p)
+    {
+        if (deck.Count > 0)
+            p.hand.Add(DrawFromDeck());
+    }
+
+    Card DrawFromDeck()
+    {
+        Card c = deck[0];
+        deck.RemoveAt(0);
+        UpdatePileVisuals();
+        return c;
+    }
+
+    void UpdatePileText()
+    {
+        if (pile.Count > 0)
+            pileText.text = "Pile : " + pile.Last();
+        else
+            pileText.text = "Pile vide";
+    }
+
+    void UpdatePileVisuals()
+    {
+        // Discard (pile centrale)
+        if (pile.Count > 0)
+            discardPilePos.GetComponentInChildren<Text>().text = pile.Last().ToString();
+        else
+            discardPilePos.GetComponentInChildren<Text>().text = "Vide";
+
+        // Draw pile
+        drawPilePos.GetComponentInChildren<Text>().text = $"{deck.Count} cartes";
+
+        // Burn pile (optionnel)
+        burnPilePos.GetComponentInChildren<Text>().text = "🔥";
+    }
+}
+
+/*    private void PlayTurn(Player player)
     {
         // choix d’une carte valide (simulation simple)
         var validCards = GetPlayableCards(player);
@@ -142,6 +282,22 @@ public class GameManager : MonoBehaviour
         else
             return playValue >= topValue || played.rank == Rank.Two || played.rank == Rank.Ten;
     }
+
+    public void OnCardClicked(CardUI clickedCard)
+    {
+        if (!IsCardPlayable(clickedCard.card, pile.Last()))
+        {
+            Debug.Log("Carte non jouable !");
+            return;
+        }
+
+        currentPlayer.hand.Remove(clickedCard.card);
+        pile.Add(clickedCard.card);
+        ApplyCardEffect(clickedCard.card, currentPlayer);
+        DrawIfNeeded(currentPlayer);
+        NextPlayer();
+    }
+
 
     private void ApplyCardEffect(Card card, Player player)
     {
@@ -212,5 +368,5 @@ public class GameManager : MonoBehaviour
         currentPlayer = (currentPlayer == playerA) ? playerB : playerA;
         Debug.Log($"Le tour de {currentPlayer.Name} est sauté !");
         currentPlayer = (currentPlayer == playerA) ? playerB : playerA;
-    }
-}
+     }*/
+
