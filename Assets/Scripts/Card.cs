@@ -1,26 +1,30 @@
+// Card.cs
 using System;
 
 [Serializable]
-public struct Card
+public class Card
 {
-    public Suit suit;
-    public Rank rank;
+    // correspond à card.value et card.suit utilisés dans GameManager
+    public string suit;   // "Hearts", "Diamonds", "Clubs", "Spades"
+    public int value;     // 2..14 (11=J,12=Q,13=K,14=A)
 
-    public Card(Suit suit, Rank rank)
+    public Card(string suit, int value)
     {
         this.suit = suit;
-        this.rank = rank;
+        this.value = value;
     }
 
     public override string ToString()
-}
-
-public enum Suit
-{
-    Clubs, Diamonds, Hearts, Spades
-}
-
-public enum Rank
-{
-    Two = 2, Three = 3, Four = 4, Five = 5, Six = 6, Seven = 7, Eight = 8, Nine = 9, Ten = 10, Jack = 11, Queen = 12, King = 13, Ace = 14
+    {
+        string rankStr;
+        switch (value)
+        {
+            case 11: rankStr = "J"; break;
+            case 12: rankStr = "Q"; break;
+            case 13: rankStr = "K"; break;
+            case 14: rankStr = "A"; break;
+            default: rankStr = value.ToString(); break;
+        }
+        return $"{rankStr} of {suit}";
+    }
 }
