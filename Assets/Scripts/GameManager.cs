@@ -1,20 +1,21 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
-/// <summary>
-/// Logique complète du jeu de bataille norvégienne à 2 joueurs (logique console).
-/// Attache à un GameObject vide dans Unity.
-/// </summary>
 public class GameManager : MonoBehaviour
 {
     private List<Card> deck = new List<Card>();
     private List<Card> pile = new List<Card>();
     private List<Card> burned = new List<Card>();
+    private List<Player> players = new List<Player>();
 
-    private Player playerA;
-    private Player playerB;
-    private Player currentPlayer;
+    private int currentPlayerIndex = 0;
+
+    public Transform BotHandPanel;
+    public GameObject cardPrefab;
+    public Text pileText;
+    public text infoText;
 
     private bool reversedRule = false;
     private bool sameSuitRule = false;
@@ -23,7 +24,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        StartNewGame();
+        StartNewGame(); 
         SimulateGame();
     }
 
@@ -32,8 +33,8 @@ public class GameManager : MonoBehaviour
         deck = Deck.CreateStandard52();
         Deck.Shuffle(deck);
 
-        playerA = new Player("Alice");
-        playerB = new Player("Bob");
+        playerA = new Player("Ruben");
+        playerB = new Player("Timothy");
 
         DealInitialCards(playerA);
         DealInitialCards(playerB);
@@ -56,8 +57,8 @@ public class GameManager : MonoBehaviour
         deck.RemoveRange(0, 3);
         p.visible.AddRange(deck.Take(3));
         deck.RemoveRange(0, 3);
-        p.hand.AddRange(deck.Take(7));
-        deck.RemoveRange(0, 7);
+        p.hand.AddRange(deck.Take(3));
+        deck.RemoveRange(0, 3);
     }
 
     private void SimulateGame()
@@ -86,6 +87,7 @@ public class GameManager : MonoBehaviour
             pile.Clear();
             reversedRule = false;
             sameSuitRule = false;
+            DrawIfNeeded(player);
             return;
         }
 
@@ -96,8 +98,20 @@ public class GameManager : MonoBehaviour
         Debug.Log($"{player.Name} joue {card}");
 
         ApplyCardEffect(card, player);
+        DrawIfNeeded(player);
     }
 
+    private void DrawIfNeeded(Player player)
+    {
+        // Tant que le joueur a moins de 3 cartes et que le deck n’est pas vide
+        while (player.hand.Count < 3 && deck.Count > 0)
+        {
+            var drawn = deck[0];
+            deck.RemoveAt(0);
+            player.hand.Add(drawn);
+            Debug.Log($"{player.Name} pioche {drawn}");
+        }
+    }
     private List<Card> GetPlayableCards(Player player)
     {
         if (pile.Count == 0)
