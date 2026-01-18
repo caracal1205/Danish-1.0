@@ -20,8 +20,7 @@ public class GameManager : MonoBehaviour
     public Transform burnPilePos;
 
     // Références Prefabs/UI
-    public GameObject cardPrefab;
-    public GameObject cardBackPreFab;
+    public GameObject[] allCardPrefabs;
     public Text pileText;
     public Text infoText;
     public Button pickupButton; // Bouton à lier dans l'Inspector pour "Ramasser la pile"
@@ -38,6 +37,22 @@ public class GameManager : MonoBehaviour
         StartTurn();
     }
 
+    private GameObject GetPrefabForCard(Card card)
+{
+    // This assumes your objects are named like "Hearts_Ace", "Clubs_Two", etc.
+    string targetName = $"{card.suit}_{card.rank}";
+    
+    foreach (GameObject prefab in allCardPrefabs)
+    {
+        if (prefab.name == targetName)
+        {
+            return prefab;
+        }
+    }
+
+    Debug.LogError($"Prefab for {targetName} not found in allCardPrefabs!");
+    return null;
+}
     public void StartNewGame()
     {
         deck = Deck.CreateStandard52();
@@ -281,14 +296,16 @@ public class GameManager : MonoBehaviour
             Card topCard = pile.Last();
             
             // Instancier le CardPrefab à la position de défausse
-            GameObject cardGO = Instantiate(cardPrefab, discardPos);
+            GameObject specificPrefab = GetPrefabForCard(topCard);
+            GameObject cardGO = Instantiate(specificPrefab, discardPos);
             
             // Mettre à jour le CardUI (pour activer le bon modèle 3D)
             CardUI ui = cardGO.GetComponent<CardUI>();
-            ui.Setup(topCard, this);
-            
-            // Désactiver l'interaction (on ne peut pas cliquer sur la carte de la pile)
-            ui.DisableInteraction(); 
+                if(ui != null) {
+        ui.Setup(topCard, this);
+        ui.DisableInteraction(); 
+        }
+    
             cardGO.transform.localPosition = Vector3.zero;
             cardGO.transform.localRotation = Quaternion.identity;
         }
@@ -307,7 +324,7 @@ public class GameManager : MonoBehaviour
         // Logique similaire si vous voulez un visuel pour le tas brûlé
     }
 
-    // Affiche la main du joueur (cartes en main)
+    // Affiche la m     ain du joueur (cartes en main)
     void ShowPlayerHand(Player player)
     {
         foreach (Transform child in playerHandPanel)
@@ -319,10 +336,14 @@ public class GameManager : MonoBehaviour
 
         for (int i = 0; i < n; i++)
         {
-            GameObject cardGO = Instantiate(cardPrefab, playerHandPanel);
+            GameObject specificPrefab = GetPrefabForCard(player.hand[i]);
+            GameObject cardGO = Instantiate(specificPrefab, playerHandPanel);
+    
             CardUI ui = cardGO.GetComponent<CardUI>();
-            ui.Setup(player.hand[i], this); 
-            ui.button.onClick.AddListener(() => OnCardClicked(ui));
+            if(ui != null) {
+                ui.Setup(player.hand[i], this); 
+                ui.button.onClick.AddListener(() => OnCardClicked(ui));
+            }
 
             RectTransform rt = cardGO.GetComponent<RectTransform>();
             rt.localRotation = Quaternion.Euler(0, 0, startAngle + spread * i);

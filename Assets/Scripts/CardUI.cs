@@ -20,17 +20,17 @@ public class CardUI : MonoBehaviour
     {
         card = c;
         gameManager = manager;
-        
-        // 1. Masquer le label Text (si vous utilisez le modèle 3D)
-        if (label != null) label.enabled = false;
-        
-        // 2. Chercher et activer le modèle 3D correspondant
-        Enable3DModel(c.suit, c.rank);
+    
+    // We no longer need to find children because 'this' object IS the card
+        if (label != null) 
+        {
+            label.text = c.ToString(); // Keep for debug if needed
+            label.enabled = false;
+        }
 
-        // 3. Activer le bouton par défaut
-        if (button != null)
-            button.interactable = true;
-    }
+        if (button == null) button = GetComponent<Button>();
+        if (button != null) button.interactable = true;
+    }      
     
     public void DisableInteraction()
     {
