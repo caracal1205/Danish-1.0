@@ -44,7 +44,7 @@ public class GameManager : MonoBehaviour
     
     foreach (GameObject prefab in allCardPrefabs)
     {
-        if (prefab.name == targetName)
+        if(prefab != null && prefab.name.Equals(targetName, System.StringComparison.OrdinalIgnoreCase))
         {
             return prefab;
         }
