@@ -30,7 +30,15 @@ public class GameManager : MonoBehaviour
     private bool sameSuitRule = false; // Règle non utilisée dans le Danish standard
     private Suit restrictedSuit;
     private int minRankRequired;
-
+    void Awake()
+    {
+        Debug.Assert(playerHandPanel != null, "PlayerHandPanel manquant");
+        Debug.Assert(BotHandPanel != null, "BotHandPanel manquant");
+        Debug.Assert(drawPilePos != null, "drawPilePos manquant");
+        Debug.Assert(discardPos != null, "discardPos manquant");
+        Debug.Assert(pileText != null, "pileText manquant");
+        Debug.Assert(infoText != null, "infoText manquant");
+    }
     void Start()
     {
         StartNewGame(); 
