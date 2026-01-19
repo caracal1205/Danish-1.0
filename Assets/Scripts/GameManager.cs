@@ -293,8 +293,9 @@ public class GameManager : MonoBehaviour
 {
     foreach (Transform child in playerHandPanel) { Destroy(child.gameObject); }
 
-    float spreadAngle = 10f; // Angle entre chaque carte
-    float horizontalSpacing = 80f; // Espace horizontal entre les cartes (si UI)
+    float curveIntensity = 90f;
+    float spreadAngle = 20f; // Angle entre chaque carte
+    float horizontalSpacing = 45f; // Espace horizontal entre les cartes (si UI)
     int n = player.hand.Count;
     
     // Calcul du point de départ pour centrer l'éventail
@@ -303,6 +304,9 @@ public class GameManager : MonoBehaviour
 
     for (int i = 0; i < n; i++)
     {
+        float currentAngle = startAngle + (i * spreadAngle);
+        float rad = currentAngle * Mathf.Deg2Rad;
+        float yPos = Mathf.Cos(rad) * curveIntensity;
         GameObject specificPrefab = GetPrefabForCard(player.hand[i]);
         if (specificPrefab == null) continue;
         
@@ -310,14 +314,14 @@ public class GameManager : MonoBehaviour
         
         // 1. CORRECTION DE L'ÉCHELLE
         // Ajustez cette valeur (ex: 50 ou 100) jusqu'à ce que la taille soit correcte
-        cardGO.transform.localScale = new Vector3(100f, 100f, 100f); 
+        cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
 
         // 2. POSITIONNEMENT
         // On décale les cartes horizontalement pour qu'elles ne soient pas toutes au même endroit
-        cardGO.transform.localPosition = new Vector3(startX + (i * horizontalSpacing), 0, 0);
+        cardGO.transform.localPosition = new Vector3(startX + (i * horizontalSpacing), yPos, i * 0.1f);
         
         // 3. ROTATION (Éventail)
-        cardGO.transform.localRotation = Quaternion.Euler(0, 0, startAngle + (i * spreadAngle));
+        cardGO.transform.localRotation = Quaternion.Euler(0, 180, startAngle + (i * spreadAngle));
         
         CardUI ui = cardGO.GetComponentInChildren<CardUI>();
         if(ui != null) 
