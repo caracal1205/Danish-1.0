@@ -287,47 +287,31 @@ public class GameManager : MonoBehaviour
     // Met à jour les visuels 3D des piles
     void UpdatePileVisuals()
     {
-        // 1. Pile de défausse (discardPos)
         foreach (Transform child in discardPos)
             Destroy(child.gameObject);
 
         if (pile.Count > 0)
         {
             Card topCard = pile.Last();
-            
-            // Instancier le CardPrefab à la position de défausse
             GameObject specificPrefab = GetPrefabForCard(topCard);
-            if (specificPrefab == null) 
+        
+            if (specificPrefab != null) 
             {
-                Debug.LogError("Skipping instantiation because prefab was not found!");
-                continue; // Skip this card and move to the next
-            }
-            GameObject cardGO = Instantiate(specificPrefab, discardPos);
+                GameObject cardGO = Instantiate(specificPrefab, discardPos);
             
-            // Mettre à jour le CardUI (pour activer le bon modèle 3D)
-            CardUI ui = cardGO.GetComponentInChildren<CardUI>();
+            // 1. Position using standard Transform
+                cardGO.transform.localPosition = Vector3.zero;
+                cardGO.transform.localRotation = Quaternion.identity;
+
+            // 2. Find CardUI in the children (the Canvas)
+                CardUI ui = cardGO.GetComponentInChildren<CardUI>();
                 if(ui != null) 
                 {
                     ui.Setup(topCard, this);
                     ui.DisableInteraction(); 
                 }
-            cardGO.transform.SetParent(discardPos);
-            cardGO.transform.localPosition = Vector3.zero;
-            cardGO.transform.localRotation = Quaternion.identity;
+            }
         }
-
-        // 2. Pioche (drawPilePos) - Utilise le dos de carte
-        foreach (Transform child in drawPilePos)
-            Destroy(child.gameObject);
-
-        /*if (deck.Count > 0 && allCardPrefabs.Length > 0)
-        {
-    // Use the first card in your list as a placeholder
-            GameObject cardGO = Instantiate(allCardPrefabs[0], drawPilePos); 
-
-    // Flip the card over so the back face is up
-            cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
-        } */    
     }
 
 
