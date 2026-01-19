@@ -287,9 +287,13 @@ public class GameManager : MonoBehaviour
     // Met à jour les visuels 3D des piles
     void UpdatePileVisuals()
     {
-        foreach (Transform child in discardPos)
-            Destroy(child.gameObject);
+        if (discardPos == null) return;
 
+        foreach (Transform child in discardPos)
+        {
+            child.gameObject.SetActive(false);
+            Destroy(child.gameObject);
+        }
         if (pile.Count > 0)
         {
             Card topCard = pile.Last();
@@ -319,7 +323,9 @@ public class GameManager : MonoBehaviour
     void ShowPlayerHand(Player player)
     {
         foreach (Transform child in playerHandPanel)
+        {
             Destroy(child.gameObject);
+        }
 
         float spread = 20f; 
         int n = player.hand.Count;
@@ -336,7 +342,8 @@ public class GameManager : MonoBehaviour
             GameObject cardGO = Instantiate(specificPrefab, playerHandPanel);
     
             CardUI ui = cardGO.GetComponentInChildren<CardUI>();
-            if(ui != null) {
+            if(ui != null) 
+            {
                 ui.Setup(player.hand[i], this); 
                 ui.button.onClick.AddListener(() => OnCardClicked(ui));
             }
@@ -349,7 +356,9 @@ public class GameManager : MonoBehaviour
     void ShowBotHand(Player bot)
     {
         foreach (Transform child in BotHandPanel)
+        {
             Destroy(child.gameObject);
+        }
         
     /*   for (int i = 0; i < bot.hand.Count; i++)
         { 
