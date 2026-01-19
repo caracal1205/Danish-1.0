@@ -11,6 +11,7 @@ public class CardUI : MonoBehaviour
 
     void Awake()
     {
+        GetComponent<Canvas>().worldCamera = Camera.main;
         if (button == null) button = GetComponent<Button>();
         // Label is optional now since the 3D model shows the rank/suit
         if (label == null) label = GetComponentInChildren<Text>();

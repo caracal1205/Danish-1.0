@@ -297,14 +297,20 @@ public class GameManager : MonoBehaviour
             
             // Instancier le CardPrefab à la position de défausse
             GameObject specificPrefab = GetPrefabForCard(topCard);
+            if (specificPrefab == null) 
+            {
+                Debug.LogError("Skipping instantiation because prefab was not found!");
+                continue; // Skip this card and move to the next
+            }
             GameObject cardGO = Instantiate(specificPrefab, discardPos);
             
             // Mettre à jour le CardUI (pour activer le bon modèle 3D)
-            CardUI ui = cardGO.GetComponent<CardUI>();
-                if(ui != null) {
-        ui.Setup(topCard, this);
-        ui.DisableInteraction(); 
-        }
+            CardUI ui = cardGO.GetComponentInChildren<CardUI>();
+                if(ui != null) 
+                {
+                    ui.Setup(topCard, this);
+                    ui.DisableInteraction(); 
+                }
     
             cardGO.transform.localPosition = Vector3.zero;
             cardGO.transform.localRotation = Quaternion.identity;
@@ -338,16 +344,20 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < n; i++)
         {
             GameObject specificPrefab = GetPrefabForCard(player.hand[i]);
+            if (specificPrefab == null) 
+            {
+                Debug.LogError("Skipping instantiation because prefab was not found!");
+                continue; // Skip this card and move to the next
+            }
             GameObject cardGO = Instantiate(specificPrefab, playerHandPanel);
     
-            CardUI ui = cardGO.GetComponent<CardUI>();
+            CardUI ui = cardGO.GetComponentInChildren<CardUI>();
             if(ui != null) {
                 ui.Setup(player.hand[i], this); 
                 ui.button.onClick.AddListener(() => OnCardClicked(ui));
             }
 
-            RectTransform rt = cardGO.GetComponent<RectTransform>();
-            rt.localRotation = Quaternion.Euler(0, 0, startAngle + spread * i);
+            cardGO.transform.localRotation = Quaternion.Euler(0, 0, startAngle + spread * i);
         }
     }
 
