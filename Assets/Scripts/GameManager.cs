@@ -311,7 +311,7 @@ public class GameManager : MonoBehaviour
                     ui.Setup(topCard, this);
                     ui.DisableInteraction(); 
                 }
-    
+            cardGO.transform.SetParent(discardPos);
             cardGO.transform.localPosition = Vector3.zero;
             cardGO.transform.localRotation = Quaternion.identity;
         }
