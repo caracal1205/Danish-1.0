@@ -314,15 +314,16 @@ public class GameManager : MonoBehaviour
         foreach (Transform child in drawPilePos)
             Destroy(child.gameObject);
 
-        if (deck.Count > 0)
+        /*if (deck.Count > 0 && allCardPrefabs.Length > 0)
         {
-            // Affiche un seul dos de carte pour la pioche
-            Instantiate(cardBackPreFab, drawPilePos); 
-        }
+    // Use the first card in your list as a placeholder
+            GameObject cardGO = Instantiate(allCardPrefabs[0], drawPilePos); 
 
-        // 3. Cartes brûlées (burnPilePos) - Optionnel
-        // Logique similaire si vous voulez un visuel pour le tas brûlé
+    // Flip the card over so the back face is up
+            cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
+        } */    
     }
+
 
     // Affiche la m     ain du joueur (cartes en main)
     void ShowPlayerHand(Player player)
@@ -356,16 +357,20 @@ public class GameManager : MonoBehaviour
         foreach (Transform child in BotHandPanel)
             Destroy(child.gameObject);
         
-        // 1. Afficher les cartes en main du Bot (dos de carte)
-        for (int i = 0; i < bot.hand.Count; i++)
-        {
-            // Instancier le Prefab Dos de Carte
-            GameObject cardGO = Instantiate(cardBackPreFab, BotHandPanel); 
-            // Positionnement à ajuster
-            cardGO.transform.localPosition = new Vector3(i * 30, 0, 0); 
-        }
+    /*   for (int i = 0; i < bot.hand.Count; i++)
+        { 
+    if (allCardPrefabs.Length > 0)
+    {
+        GameObject cardGO = Instantiate(allCardPrefabs[0], BotHandPanel); 
+        cardGO.transform.localPosition = new Vector3(i * 30, 0, 0);
 
-        // 2. Afficher les 3 cartes visibles du Bot (faces visibles)
-        // Ceci nécessiterait une autre zone d'affichage (ex: TopPanel/BotVisiblePanel)
+        // Flip the card
+        cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
+
+        // Disable interaction so the player can't click bot cards
+        CardUI ui = cardGO.GetComponent<CardUI>();
+        if (ui != null) ui.DisableInteraction();
+        }
+    }*/
     }
 }
