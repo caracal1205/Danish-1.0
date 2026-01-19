@@ -281,6 +281,7 @@ public class GameManager : MonoBehaviour
                 GameObject cardGO = Instantiate(specificPrefab, discardPos);
                 cardGO.transform.localPosition = Vector3.zero;
                 cardGO.transform.localRotation = Quaternion.identity;
+                cardGO.transform.localScale = Vector3.one;
 
                 CardUI ui = cardGO.GetComponentInChildren<CardUI>();
                 if(ui != null) { ui.Setup(topCard, this); ui.DisableInteraction(); }
@@ -302,15 +303,19 @@ public class GameManager : MonoBehaviour
             if (specificPrefab == null) continue;
             
             GameObject cardGO = Instantiate(specificPrefab, playerHandPanel);
+            cardGO.transform.localPosition = Vector3.zero;
+            cardGO.transform.localRotation = Quaternion.identity;
+            cardGO.transform.localScale = Vector3.one;
+            
             CardUI ui = cardGO.GetComponentInChildren<CardUI>();
             if(ui != null) 
             {
                 ui.Setup(player.hand[i], this); 
                 ui.button.onClick.AddListener(() => OnCardClicked(ui));
             }
-            cardGO.transform.localRotation = Quaternion.Euler(0, 0, startAngle + spread * i);
         }
     }
+
 
     void ShowBotHand(Player bot)
     {
