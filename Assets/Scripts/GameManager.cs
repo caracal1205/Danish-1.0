@@ -290,31 +290,43 @@ public class GameManager : MonoBehaviour
     }
 
     void ShowPlayerHand(Player player)
+{
+    foreach (Transform child in playerHandPanel) { Destroy(child.gameObject); }
+
+    float spreadAngle = 10f; // Angle entre chaque carte
+    float horizontalSpacing = 80f; // Espace horizontal entre les cartes (si UI)
+    int n = player.hand.Count;
+    
+    // Calcul du point de départ pour centrer l'éventail
+    float startX = -horizontalSpacing * (n - 1) / 2;
+    float startAngle = -spreadAngle * (n - 1) / 2;
+
+    for (int i = 0; i < n; i++)
     {
-        foreach (Transform child in playerHandPanel) { Destroy(child.gameObject); }
+        GameObject specificPrefab = GetPrefabForCard(player.hand[i]);
+        if (specificPrefab == null) continue;
+        
+        GameObject cardGO = Instantiate(specificPrefab, playerHandPanel);
+        
+        // 1. CORRECTION DE L'ÉCHELLE
+        // Ajustez cette valeur (ex: 50 ou 100) jusqu'à ce que la taille soit correcte
+        cardGO.transform.localScale = new Vector3(100f, 100f, 100f); 
 
-        float spread = 20f; 
-        int n = player.hand.Count;
-        float startAngle = -spread * (n - 1) / 2;
-
-        for (int i = 0; i < n; i++)
+        // 2. POSITIONNEMENT
+        // On décale les cartes horizontalement pour qu'elles ne soient pas toutes au même endroit
+        cardGO.transform.localPosition = new Vector3(startX + (i * horizontalSpacing), 0, 0);
+        
+        // 3. ROTATION (Éventail)
+        cardGO.transform.localRotation = Quaternion.Euler(0, 0, startAngle + (i * spreadAngle));
+        
+        CardUI ui = cardGO.GetComponentInChildren<CardUI>();
+        if(ui != null) 
         {
-            GameObject specificPrefab = GetPrefabForCard(player.hand[i]);
-            if (specificPrefab == null) continue;
-            
-            GameObject cardGO = Instantiate(specificPrefab, playerHandPanel);
-            cardGO.transform.localPosition = Vector3.zero;
-            cardGO.transform.localRotation = Quaternion.identity;
-            cardGO.transform.localScale = Vector3.one;
-            
-            CardUI ui = cardGO.GetComponentInChildren<CardUI>();
-            if(ui != null) 
-            {
-                ui.Setup(player.hand[i], this); 
-                ui.button.onClick.AddListener(() => OnCardClicked(ui));
-            }
+            ui.Setup(player.hand[i], this); 
+            ui.button.onClick.AddListener(() => OnCardClicked(ui));
         }
     }
+}
 
 
     void ShowBotHand(Player bot)
