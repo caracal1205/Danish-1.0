@@ -15,6 +15,8 @@ public class GameManager : MonoBehaviour
     // Références Canvas
     public Transform BotHandPanel;
     public Transform playerHandPanel;
+    public Transform cardUpSide;
+    public Transform cardDownSide;
     public Transform drawPilePos;
     public Transform discardPos;
     public Transform burnPilePos;
@@ -248,6 +250,8 @@ public class GameManager : MonoBehaviour
         ShowPlayerHand(current);
         ShowDrawPile();
         ShowDiscard();
+        ShowCardUpSide();
+        ShowCardDownSide();
         ShowBotHand(players[(currentPlayerIndex + 1) % players.Count]); 
 
         pickupButton.onClick.RemoveAllListeners();
@@ -339,6 +343,39 @@ public class GameManager : MonoBehaviour
     }
 }
 
+    void ShowCardUpSide(Player player)
+    {
+        foreach (Transform child in cardUpSide) { Destroy(child.gameObject); }
+        int n = player.visible.Count;
+
+        for (int i = 0; i < n ; i++)
+        {
+            GameObject specificPrefab = GetPrefabForCard(player.visible[i]);
+
+            GameObject cardGO = Instantiate(specificPrefab, cardUpSide);
+            cardGO.transform.localPosition = new Vector3(0, 50f, 0);
+            cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
+            cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
+        }
+
+    }
+
+    void ShowCardDownSide(Player player)
+    {
+        foreach (Trasform child in cardDownSide) {Destroy(child.gameObject);}
+        int n = player.hidden.Count;
+
+        for (int i = 0; i < n ; i++);
+        {
+            GameObject specificPrefab = GetPrefabForCard(player.hiddens[i]);
+
+            GameObject cardGO = Instantiate(specificPrefab, discardPos);
+            cardGO.transform.localPosition = new Vector3(0, 50f, 0);
+            cardGO.transform.localRotation = Quaternion.Euler(0, 0, 0);
+            cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
+        }
+    }
+
     void ShowDrawPile()
     {
         foreach (Transform child in drawPilePos) { Destroy(child.gameObject); }
@@ -378,7 +415,7 @@ public class GameManager : MonoBehaviour
         cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
         cardGO.transform.localPosition = new Vector3(0, i * 5f, 0);
         cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
-        
+
     }
 }
     
