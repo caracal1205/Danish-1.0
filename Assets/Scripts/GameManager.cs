@@ -175,7 +175,9 @@ public class GameManager : MonoBehaviour
 
     void ShowPlayerHand(Player player)
     {
-        foreach (Transform child in playerHandPanel) { Destroy(child.gameObject); }
+        foreach (Transform child in playerHandPanel) { 
+            child.gameObject.SetActive(false);
+            Destroy(child.gameObject); }
         int n = player.hand.Count;
         float spacing = 50f;
         float startX = -spacing * (n - 1) / 2;
@@ -226,7 +228,7 @@ public class GameManager : MonoBehaviour
         {
             GameObject specificPrefab = GetPrefabForCard(player.hidden[i]);
 
-            GameObject cardGO = Instantiate(specificPrefab, discardPos);
+            GameObject cardGO = Instantiate(specificPrefab, playerHiddenSlots);
             cardGO.transform.localPosition = new Vector3(0, 50f, 0);
             cardGO.transform.localRotation = Quaternion.Euler(0, 0, 0);
             cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
