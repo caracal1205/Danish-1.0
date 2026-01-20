@@ -358,21 +358,28 @@ public class GameManager : MonoBehaviour
     }
 
     void ShowDiscard()
+{
+    // 1. Toujours nettoyer l'emplacement avant de réafficher
+    foreach (Transform child in burnPilePos) { Destroy(child.gameObject); }
+
+    int n = burned.Count;
+
+    for (int i = 0; i < n; i++)
     {
-        int n = burned.Count;
+        // CORRECTION : Utilisez burned[i] au lieu de deck[i]
+        GameObject specificPrefab = GetPrefabForCard(burned[i]);
+        if (specificPrefab == null) continue;
 
-        for (int i = 0; i < n; i ++)
-        {
-                GameObject specificPrefab = GetPrefabForCard(deck[i]);
-                if (specificPrefab == null) continue;
+        GameObject cardGO = Instantiate(specificPrefab, burnPilePos);
 
-                GameObject cardGO = Instantiate(specificPrefab, burnPilePos);
-
-                cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
-                cardGO.transform.localPosition = Vector3.zero;
-                cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
-        }
+        cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
+        
+        // Optionnel : un petit décalage pour voir l'épaisseur du tas
+        cardGO.transform.localPosition = new Vector3(0, i * 0.1f, 0);
+        cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
     }
+}
+    
 
 
     void ShowBotHand(Player bot)
