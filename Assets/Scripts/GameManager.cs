@@ -15,6 +15,8 @@ public class GameManager : MonoBehaviour
     // Références Canvas
     public Transform BotHandPanel;
     public Transform playerHandPanel;
+    public Transform playerVisibleSlots;
+    public Transform playerHiddenSlots;
     public Transform drawPilePos;
     public Transform discardPos;
     public Transform burnPilePos;
@@ -125,9 +127,7 @@ public class GameManager : MonoBehaviour
         
         current.hand.Remove(clickedCard.card);
         pile.Add(clickedCard.card);
-        
-        ShowPlayerHand(current); 
-        ShowDrawPile();
+
         ApplyCardEffect(clickedCard.card, current);
         
         if (current.HasNoCards)
@@ -214,9 +214,7 @@ public class GameManager : MonoBehaviour
         Debug.Log($"[Ramassage] {player.Name} ramasse la pile de {pile.Count} cartes.");
         player.hand.AddRange(pile);
         pile.Clear();
-        
-        ShowPlayerHand(player);
-        UpdatePileVisuals();
+        UpdatePileVisuals();    
         NextTurn(); 
     }
 
@@ -247,6 +245,8 @@ public class GameManager : MonoBehaviour
         ShowPlayerHand(current);
         ShowDrawPile();
         ShowDiscard();
+        ShowCardUpSide(current);
+        ShowCardDownSide(current);
         ShowBotHand(players[(currentPlayerIndex + 1) % players.Count]); 
 
         pickupButton.onClick.RemoveAllListeners();
@@ -297,7 +297,9 @@ public class GameManager : MonoBehaviour
 
     void ShowPlayerHand(Player player)
 {
-    foreach (Transform child in playerHandPanel) { Destroy(child.gameObject); }
+    foreach (Transform child in playerHandPanel) { 
+        child.gameObject.SetActive(false);
+        Destroy(child.gameObject); }
 
     float curveIntensity = 60f;
     float spreadAngle = 20f; // Angle entre chaque carte
@@ -338,6 +340,39 @@ public class GameManager : MonoBehaviour
     }
 }
 
+    void ShowCardUpSide(Player player)
+    {
+        foreach (Transform child in playerVisibleSlots) { Destroy(child.gameObject); }
+        int n = player.visible.Count;
+
+        for (int i = 0; i < n ; i++)
+        {
+            GameObject specificPrefab = GetPrefabForCard(player.visible[i]);
+
+            GameObject cardGO = Instantiate(specificPrefab, cardUpSide);
+            cardGO.transform.localPosition = new Vector3(0, 50f, 0);
+            cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
+            cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
+        }
+
+    }
+
+    void ShowCardDownSide(Player player)
+    {
+        foreach (Transform child in playerHiddenSlots) {Destroy(child.gameObject);}
+        int n = player.hidden.Count;
+
+        for (int i = 0; i < n ; i++)
+        {
+            GameObject specificPrefab = GetPrefabForCard(player.hidden[i]);
+
+            GameObject cardGO = Instantiate(specificPrefab, discardPos);
+            cardGO.transform.localPosition = new Vector3(0, 50f, 0);
+            cardGO.transform.localRotation = Quaternion.Euler(0, 0, 0);
+            cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
+        }
+    }
+
     void ShowDrawPile()
     {
         foreach (Transform child in drawPilePos) { Destroy(child.gameObject); }
@@ -353,7 +388,7 @@ public class GameManager : MonoBehaviour
                 GameObject cardGO = Instantiate(specificPrefab, drawPilePos);
 
                 cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
-                cardGO.transform.localPosition = Vector3.zero;
+                cardGO.transform.localPosition =  Vector3.zero;
                 cardGO.transform.localRotation = Quaternion.Euler(0, 0, 0);
         }
     }
@@ -377,7 +412,7 @@ public class GameManager : MonoBehaviour
         cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
         cardGO.transform.localPosition = new Vector3(0, i * 5f, 0);
         cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
-        
+
     }
 }
     
