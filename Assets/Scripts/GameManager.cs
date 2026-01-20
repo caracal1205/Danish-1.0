@@ -37,6 +37,8 @@ public class GameManager : MonoBehaviour
         Debug.Assert(discardPos != null, "discardPos manquant");
     }
 
+//boucle princiale du jeu
+
     void Start()
     {
         StartNewGame(); 
@@ -78,17 +80,36 @@ public class GameManager : MonoBehaviour
         deck.RemoveRange(0, 3);
         p.hand.AddRange(deck.Take(7));
         deck.RemoveRange(0, 7);
-    }
+    }    
 
-    private GameObject GetPrefabForCard(Card card)
+    void StartTurn()
     {
-        string targetName = $"{card.suit}_{card.rank}";
-        foreach (GameObject prefab in allCardPrefabs)
-        {
-            if(prefab != null && prefab.name.Equals(targetName, System.StringComparison.OrdinalIgnoreCase))
-                return prefab;
-        }
-        return null;
+        Player current = players[currentPlayerIndex];
+        Player waiting = players[(currentPlayerIndex + 1) % players.Count];
+        
+        infoText.text = $"C'est au tour de : {current.Name}";
+        
+        // Mise à jour de tous les visuels pour le joueur actuel
+        ShowPlayerHand(current);
+        ShowCardUpSide(current);
+        ShowCardDownSide(current);
+        ShowDrawPile();
+        ShowDiscard();
+        
+        // Optionnel : afficher le dos des cartes de l'adversaire
+        ShowOpponentBacks(waiting);
+
+        pickupButton.onClick.RemoveAllListeners();
+        pickupButton.onClick.AddListener(() => PickUpPile(current));
+    }
+    void NextTurn()
+    {
+        int direction = reversedRule ? -1 : 1;
+        currentPlayerIndex = (currentPlayerIndex + direction) % players.Count;
+        if (currentPlayerIndex < 0) currentPlayerIndex += players.Count;
+
+        UpdatePileVisuals();
+        StartTurn();
     }
 
     public void OnCardClicked(CardUI clickedCard)
@@ -116,6 +137,148 @@ public class GameManager : MonoBehaviour
         NextTurn();
     }
 
+//Utils
+
+    private GameObject GetPrefabForCard(Card card)
+    {
+        string targetName = $"{card.suit}_{card.rank}";
+        foreach (GameObject prefab in allCardPrefabs)
+        {
+            if(prefab != null && prefab.name.Equals(targetName, System.StringComparison.OrdinalIgnoreCase))
+                return prefab;
+        }
+        return null;
+    }
+
+    //Pile
+
+        void UpdatePileVisuals()
+    {
+        foreach (Transform child in discardPos) { Destroy(child.gameObject); }
+        if (pile.Count > 0)
+        {
+            Card topCard = pile.Last();
+            GameObject prefab = GetPrefabForCard(topCard);
+            if (prefab != null) 
+            {
+                GameObject cardGO = Instantiate(prefab, discardPos);
+                cardGO.transform.localPosition = Vector3.zero;
+                cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
+                cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
+                CardUI ui = cardGO.GetComponentInChildren<CardUI>();
+                if(ui != null) { ui.Setup(topCard, this); ui.DisableInteraction(); }
+            }
+        }
+        if (pileText != null) pileText.text = pile.Count > 0 ? $"Pile : {pile.Last()}" : "Pile vide";
+    }
+
+    //Joueur
+
+    void ShowPlayerHand(Player player)
+    {
+        foreach (Transform child in playerHandPanel) { Destroy(child.gameObject); }
+        int n = player.hand.Count;
+        float spacing = 50f;
+        float startX = -spacing * (n - 1) / 2;
+
+        for (int i = 0; i < n; i++)
+        {
+            GameObject prefab = GetPrefabForCard(player.hand[i]);
+            if (prefab == null) continue;
+            
+            GameObject cardGO = Instantiate(prefab, playerHandPanel);
+            cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
+            cardGO.transform.localPosition = new Vector3(startX + (i * spacing), 0, i * -0.1f);
+            cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
+            
+            CardUI ui = cardGO.GetComponentInChildren<CardUI>();
+            if(ui != null) 
+            {
+                ui.Setup(player.hand[i], this); 
+                ui.button.onClick.AddListener(() => OnCardClicked(ui));
+            }
+        }
+    }
+
+    //Aire de jeu
+    void ShowCardUpSide(Player player)
+    {
+        foreach (Transform child in playerVisibleSlots) { Destroy(child.gameObject); }
+        int n = player.visible.Count;
+
+        for (int i = 0; i < n ; i++)
+        {
+            GameObject specificPrefab = GetPrefabForCard(player.visible[i]);
+
+            GameObject cardGO = Instantiate(specificPrefab, playerVisibleSlots);
+            cardGO.transform.localPosition = new Vector3(0, 50f, 0);
+            cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
+            cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
+        }
+
+    }
+
+    void ShowCardDownSide(Player player)
+    {
+        foreach (Transform child in playerHiddenSlots) {Destroy(child.gameObject);}
+        int n = player.hidden.Count;
+
+        for (int i = 0; i < n ; i++)
+        {
+            GameObject specificPrefab = GetPrefabForCard(player.hidden[i]);
+
+            GameObject cardGO = Instantiate(specificPrefab, discardPos);
+            cardGO.transform.localPosition = new Vector3(0, 50f, 0);
+            cardGO.transform.localRotation = Quaternion.Euler(0, 0, 0);
+            cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
+        }
+    }
+
+    void ShowDrawPile()
+    {
+        foreach (Transform child in drawPilePos) { Destroy(child.gameObject); }
+        int n = deck.Count;
+
+        drawText.text = $"il reste {n} dans la pioche";
+
+        for (int i = 0; i < n; i ++)
+        {
+                GameObject specificPrefab = GetPrefabForCard(deck[i]);
+                if (specificPrefab == null) continue;
+
+                GameObject cardGO = Instantiate(specificPrefab, drawPilePos);
+
+                cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
+                cardGO.transform.localPosition =  Vector3.zero;
+                cardGO.transform.localRotation = Quaternion.Euler(0, 0, 0);
+        }
+    }
+
+    void ShowDiscard()
+{
+    // 1. Toujours nettoyer l'emplacement avant de réafficher
+    foreach (Transform child in burnPilePos) { Destroy(child.gameObject); }
+
+    int n = burned.Count;
+    if(n == 0) return;
+
+    for (int i = 0; i < n; i++)
+    {
+        
+        GameObject specificPrefab = GetPrefabForCard(burned[i]);
+        if (specificPrefab == null) continue;
+
+        GameObject cardGO = Instantiate(specificPrefab, burnPilePos);
+
+        cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
+        cardGO.transform.localPosition = new Vector3(0, i * 5f, 0);
+        cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
+
+    }
+}
+
+
+//Logique de jeu
     bool IsCardPlayable(Card card)
     {
         if (pile.Count == 0) return true;
@@ -148,6 +311,9 @@ public class GameManager : MonoBehaviour
         }
     }
 
+
+//Actions
+
     public void PickUpPile(Player player)
     {
         if (pile.Count == 0) return;
@@ -156,147 +322,6 @@ public class GameManager : MonoBehaviour
         NextTurn(); 
     }
 
-    void StartTurn()
-    {
-        Player current = players[currentPlayerIndex];
-        Player waiting = players[(currentPlayerIndex + 1) % players.Count];
-        
-        infoText.text = $"C'est au tour de : {current.Name}";
-        
-        // Mise à jour de tous les visuels pour le joueur actuel
-        ShowPlayerHand(current);
-        ShowCardUpSide(current);
-        ShowCardDownSide(current);
-        ShowDrawPile();
-        ShowDiscard();
-        
-        // Optionnel : afficher le dos des cartes de l'adversaire
-        ShowOpponentBacks(waiting);
-
-        pickupButton.onClick.RemoveAllListeners();
-        pickupButton.onClick.AddListener(() => PickUpPile(current));
-    }
-
-    void NextTurn()
-    {
-        int direction = reversedRule ? -1 : 1;
-        currentPlayerIndex = (currentPlayerIndex + direction) % players.Count;
-        if (currentPlayerIndex < 0) currentPlayerIndex += players.Count;
-
-        UpdatePileVisuals();
-        StartTurn();
-    }
-
-    void UpdatePileVisuals()
-    {
-        foreach (Transform child in discardPos) { Destroy(child.gameObject); }
-        if (pile.Count > 0)
-        {
-            Card topCard = pile.Last();
-            GameObject prefab = GetPrefabForCard(topCard);
-            if (prefab != null) 
-            {
-                GameObject cardGO = Instantiate(prefab, discardPos);
-                cardGO.transform.localPosition = Vector3.zero;
-                cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
-                cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
-                CardUI ui = cardGO.GetComponentInChildren<CardUI>();
-                if(ui != null) { ui.Setup(topCard, this); ui.DisableInteraction(); }
-            }
-        }
-        if (pileText != null) pileText.text = pile.Count > 0 ? $"Pile : {pile.Last()}" : "Pile vide";
-    }
-
-    void ShowPlayerHand(Player player)
-    {
-        foreach (Transform child in playerHandPanel) { Destroy(child.gameObject); }
-        int n = player.hand.Count;
-        float spacing = 50f;
-        float startX = -spacing * (n - 1) / 2;
-
-        for (int i = 0; i < n; i++)
-        {
-            GameObject prefab = GetPrefabForCard(player.hand[i]);
-            if (prefab == null) continue;
-            
-            GameObject cardGO = Instantiate(prefab, playerHandPanel);
-            cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
-            cardGO.transform.localPosition = new Vector3(startX + (i * spacing), 0, i * -0.1f);
-            cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
-            
-            CardUI ui = cardGO.GetComponentInChildren<CardUI>();
-            if(ui != null) 
-            {
-                ui.Setup(player.hand[i], this); 
-                ui.button.onClick.AddListener(() => OnCardClicked(ui));
-            }
-        }
-    }
-
-    void ShowCardUpSide(Player player)
-    {
-        foreach (Transform child in playerVisibleSlots) { Destroy(child.gameObject); }
-        for (int i = 0; i < player.visible.Count; i++)
-        {
-            GameObject prefab = GetPrefabForCard(player.visible[i]);
-            GameObject cardGO = Instantiate(prefab, playerVisibleSlots);
-            cardGO.transform.localPosition = new Vector3(i * 45f, 0, 0);
-            cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
-            cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
-        }
-    }
-
-    void ShowCardDownSide(Player player)
-    {
-        foreach (Transform child in playerHiddenSlots) { Destroy(child.gameObject); }
-        for (int i = 0; i < player.hidden.Count; i++)
-        {
-            GameObject prefab = GetPrefabForCard(player.hidden[i]);
-            GameObject cardGO = Instantiate(prefab, playerHiddenSlots);
-            cardGO.transform.localPosition = new Vector3(i * 45f, 0, 0);
-            cardGO.transform.localRotation = Quaternion.Euler(0, 0, 0); // Face cachée
-            cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
-        }
-    }
-
-    void ShowDrawPile()
-    {
-        foreach (Transform child in drawPilePos) { Destroy(child.gameObject); }
-        if (drawText != null) drawText.text = $"Pioche : {deck.Count}";
-        
-        int visibleCount = Mathf.Min(deck.Count, 5); // On n'affiche que les 5 dernières pour les perfs
-        for (int i = 0; i < visibleCount; i++)
-        {
-            GameObject prefab = GetPrefabForCard(deck[i]);
-            GameObject cardGO = Instantiate(prefab, drawPilePos);
-            cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
-            cardGO.transform.localPosition = new Vector3(0, i * 0.5f, 0);
-            cardGO.transform.localRotation = Quaternion.Euler(0, 0, 0);
-        }
-    }
-
-    void ShowDiscard()
-    {
-        foreach (Transform child in burnPilePos) { Destroy(child.gameObject); }
-        if (burned.Count == 0) return;
-
-        Card lastBurned = burned.Last();
-        GameObject prefab = GetPrefabForCard(lastBurned);
-        if (prefab != null)
-        {
-            GameObject cardGO = Instantiate(prefab, burnPilePos);
-            cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
-            cardGO.transform.localPosition = Vector3.zero;
-            cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
-        }
-    }
-
-    void ShowOpponentBacks(Player opponent)
-    {
-        if (otherPlayerHandPanel == null) return;
-        foreach (Transform child in otherPlayerHandPanel) { Destroy(child.gameObject); }
-        // Ici on pourrait instancier des prefabs de dos de cartes pour l'immersion
-    }
 
     void DrawIfNeeded(Player player)
     {
