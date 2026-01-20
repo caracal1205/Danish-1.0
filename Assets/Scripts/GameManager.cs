@@ -243,10 +243,10 @@ public class GameManager : MonoBehaviour
         infoText.text = $"Tour de : {current.Name}";
         
         ShowPlayerHand(current);
-        ShowDrawPile();
-        ShowDiscard();
         ShowCardUpSide(current);
         ShowCardDownSide(current);
+        ShowDrawPile();
+        ShowDiscard();
         ShowBotHand(players[(currentPlayerIndex + 1) % players.Count]); 
 
         pickupButton.onClick.RemoveAllListeners();
@@ -349,7 +349,7 @@ public class GameManager : MonoBehaviour
         {
             GameObject specificPrefab = GetPrefabForCard(player.visible[i]);
 
-            GameObject cardGO = Instantiate(specificPrefab, cardUpSide);
+            GameObject cardGO = Instantiate(specificPrefab, playerVisibleSlots);
             cardGO.transform.localPosition = new Vector3(0, 50f, 0);
             cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
             cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
