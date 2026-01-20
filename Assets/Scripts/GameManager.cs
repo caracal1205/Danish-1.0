@@ -23,6 +23,8 @@ public class GameManager : MonoBehaviour
     public GameObject[] allCardPrefabs;
     public Text pileText;
     public Text infoText;
+
+    public Text drawText;
     public Button pickupButton;
 
     // Règles de jeu
@@ -200,6 +202,7 @@ public class GameManager : MonoBehaviour
                 burned.AddRange(pile); 
                 pile.Clear();
                 UpdatePileVisuals();
+                ShowDiscard();
                 // Annule le changement de tour car le joueur rejoue
                 currentPlayerIndex = (currentPlayerIndex - (reversedRule ? -1 : 1) + players.Count) % players.Count; 
                 break;
@@ -232,6 +235,7 @@ public class GameManager : MonoBehaviour
     {
         Card c = deck[0];
         deck.RemoveAt(0);
+        ShowDrawPile();
         return c;
     }
 
@@ -243,6 +247,7 @@ public class GameManager : MonoBehaviour
         
         ShowPlayerHand(current);
         ShowDrawPile();
+        ShowDiscard();
         ShowBotHand(players[(currentPlayerIndex + 1) % players.Count]); 
 
         pickupButton.onClick.RemoveAllListeners();
@@ -338,7 +343,9 @@ public class GameManager : MonoBehaviour
     {
         int n = deck.Count;
 
-        for (int i; i < n; i ++)
+        drawText.text = $"il reste {n} dans la pioche";
+
+        for (int i = 0; i < n; i ++)
         {
                 GameObject specificPrefab = GetPrefabForCard(deck[i]);
                 if (specificPrefab == null) continue;
@@ -348,6 +355,23 @@ public class GameManager : MonoBehaviour
                 cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
                 cardGO.transform.localPosition = new Vector3(startX + (i * horizontalSpacing), yPos, i * 0.1f);
                 cardGO.transform.localRotation = Quaternion.Euler(0, 0, 0);
+        }
+    }
+
+    void ShowDiscard()
+    {
+        int n = burned.Count;
+
+        for (int i = 0; i < n; i ++)
+        {
+                GameObject specificPrefab = GetPrefabForCard(deck[i]);
+                if (specificPrefab == null) continue;
+
+                GameObject cardGO = Instantiate(specificPrefab, burnPilePos);
+
+                cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
+                cardGO.transform.localPosition = Vector3.zero;
+                cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
         }
     }
 
