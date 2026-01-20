@@ -338,7 +338,7 @@ public class GameManager : MonoBehaviour
     {
         int n = deck.Count;
 
-        for (int i; i < n; i ++)
+        for (int i = 0; i < n; i ++)
         {
                 GameObject specificPrefab = GetPrefabForCard(deck[i]);
                 if (specificPrefab == null) continue;
@@ -346,7 +346,7 @@ public class GameManager : MonoBehaviour
                 GameObject cardGO = Instantiate(specificPrefab, drawPilePos);
 
                 cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
-                cardGO.transform.localPosition = new Vector3(startX + (i * horizontalSpacing), yPos, i * 0.1f);
+                cardGO.transform.localPosition = Vector3.zero;
                 cardGO.transform.localRotation = Quaternion.Euler(0, 0, 0);
         }
     }
