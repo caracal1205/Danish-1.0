@@ -15,8 +15,8 @@ public class GameManager : MonoBehaviour
     // Références Canvas
     public Transform BotHandPanel;
     public Transform playerHandPanel;
-    public Transform cardUpSide;
-    public Transform cardDownSide;
+    public Transform playerVisibleSlots;
+    public Transform playerHiddenSlots;
     public Transform drawPilePos;
     public Transform discardPos;
     public Transform burnPilePos;
@@ -127,7 +127,7 @@ public class GameManager : MonoBehaviour
         
         current.hand.Remove(clickedCard.card);
         pile.Add(clickedCard.card);
-        
+
         ApplyCardEffect(clickedCard.card, current);
         
         if (current.HasNoCards)
@@ -343,7 +343,7 @@ public class GameManager : MonoBehaviour
 
     void ShowCardUpSide(Player player)
     {
-        foreach (Transform child in cardUpSide) { Destroy(child.gameObject); }
+        foreach (Transform child in playerVisibleSlots) { Destroy(child.gameObject); }
         int n = player.visible.Count;
 
         for (int i = 0; i < n ; i++)
@@ -360,7 +360,7 @@ public class GameManager : MonoBehaviour
 
     void ShowCardDownSide(Player player)
     {
-        foreach (Transform child in cardDownSide) {Destroy(child.gameObject);}
+        foreach (Transform child in playerHiddenSlots) {Destroy(child.gameObject);}
         int n = player.hidden.Count;
 
         for (int i = 0; i < n ; i++)
