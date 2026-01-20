@@ -280,8 +280,8 @@ public class GameManager : MonoBehaviour
             {
                 GameObject cardGO = Instantiate(specificPrefab, discardPos);
                 cardGO.transform.localPosition = Vector3.zero;
-                cardGO.transform.localRotation = Quaternion.identity;
-                cardGO.transform.localScale = Vector3.one;
+                cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
+                cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
 
                 CardUI ui = cardGO.GetComponentInChildren<CardUI>();
                 if(ui != null) { ui.Setup(topCard, this); ui.DisableInteraction(); }

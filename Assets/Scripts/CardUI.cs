@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 [RequireComponent(typeof(Button))]
-public class CardUI : MonoBehaviour
+public class CardUI : MonoBehaviour, IPointerClickHandler
 {
     public Card card;
     public Button button;
@@ -10,6 +11,7 @@ public class CardUI : MonoBehaviour
     private GameManager gameManager;
 
     void Awake()
+    
     {
         Canvas myCanvas = GetComponent<Canvas>();
         if (myCanvas != null && Camera.main != null) myCanvas.worldCamera = Camera.main;
@@ -17,6 +19,14 @@ public class CardUI : MonoBehaviour
         if (button == null) button = GetComponent<Button>();
         // Label is optional now since the 3D model shows the rank/suit
         if (label == null) label = GetComponentInChildren<Text>();
+    }
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (button != null && button.interactable)
+        {
+            // On simule le clic sur le bouton pour déclencher les listeners du GameManager
+            button.onClick.Invoke();
+        }
     }
 
     public void Setup(Card c, GameManager manager)

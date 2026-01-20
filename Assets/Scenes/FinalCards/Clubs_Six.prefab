@@ -193,6 +193,7 @@ GameObject:
   - component: {fileID: 8771871247782622636}
   - component: {fileID: 3190309517266616253}
   - component: {fileID: 3923204525844767427}
+  - component: {fileID: -6779484267421019454}
   m_Layer: 0
   m_Name: Clubs_Six
   m_TagString: Untagged
@@ -290,7 +291,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_HighlightedColor: {r: 0.9548717, g: 1, b: 0.4198113, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
@@ -329,3 +330,24 @@ MonoBehaviour:
     rank: 0
   button: {fileID: 0}
   label: {fileID: 0}
+--- !u!65 &-6779484267421019454
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7114295552420091001}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.9999998, y: 3.1000426, z: 0.04342866}
+  m_Center: {x: 0.0000009536743, y: 0.00000047683716, z: -0.0022087432}
