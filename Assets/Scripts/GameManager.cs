@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
     private List<Player> players = new List<Player>();
 
     private int currentPlayerIndex = 0;
+    private int roundcount = 0;
 
     [Header("Configuration des Panels")]
     public Transform playerHandPanel; // Panel actif pour le joueur du tour
@@ -27,9 +28,6 @@ public class GameManager : MonoBehaviour
     public Text infoText;
     public Text drawText;
     public Button pickupButton;
-
-    private bool reversedRule = false;
-
     void Awake()
     {
         Debug.Assert(playerHandPanel != null, "playerHandPanel manquant");
@@ -61,7 +59,6 @@ public class GameManager : MonoBehaviour
 
         pile.Clear();
         burned.Clear();
-        reversedRule = false;
 
         if (deck.Count > 0)
         {
@@ -103,10 +100,15 @@ public class GameManager : MonoBehaviour
     }
     void NextTurn()
     {
-        int direction = reversedRule ? -1 : 1;
-        currentPlayerIndex = (currentPlayerIndex + direction) % players.Count;
-        if (currentPlayerIndex < 0) currentPlayerIndex += players.Count;
-
+        roundcount += 1;
+        if (roundcount % 2 == 0)
+        {
+            currentPlayerIndex = 0;
+        }
+        if (roundcount % 2 == 1)
+        {
+            currentPlayerIndex = 1;
+        }
         UpdatePileVisuals();
         StartTurn();
     }
@@ -175,9 +177,10 @@ public class GameManager : MonoBehaviour
 
     void ShowPlayerHand(Player player)
     {
-        foreach (Transform child in playerHandPanel) { 
-            child.gameObject.SetActive(false);
-            Destroy(child.gameObject); }
+        List<GameObject> children = new List<GameObject>();
+        foreach (Transform child in playerHandPanel) children.Add(child.gameObject);
+        playerHandPanel.DetachChildren(); // On vide le parent immédiatement
+        foreach (GameObject child in children) Destroy(child);
         int n = player.hand.Count;
         float spacing = 50f;
         float startX = -spacing * (n - 1) / 2;
@@ -196,6 +199,7 @@ public class GameManager : MonoBehaviour
             if(ui != null) 
             {
                 ui.Setup(player.hand[i], this); 
+                ui.button.onClick.RemoveAllListeners(); // Sécurité
                 ui.button.onClick.AddListener(() => OnCardClicked(ui));
             }
         }
@@ -295,19 +299,18 @@ public class GameManager : MonoBehaviour
     void ApplyCardEffect(Card card, Player player)
     {
         int cardValue = (int)card.rank;
+        int counter = roundcount;
         switch (cardValue)
         {
             case 10:
                 burned.AddRange(pile); 
                 pile.Clear();
                 // On reste sur le même joueur pour qu'il rejoue
-                currentPlayerIndex = (currentPlayerIndex - (reversedRule ? -1 : 1) + players.Count) % players.Count; 
+                roundcount += 1; 
                 break;
             case 8:
                 // Saute le prochain tour
-                int direction = reversedRule ? -1 : 1;
-                currentPlayerIndex = (currentPlayerIndex + direction) % players.Count;
-                if (currentPlayerIndex < 0) currentPlayerIndex += players.Count;
+                roundcount += 1;
                 break;
         }
     }
