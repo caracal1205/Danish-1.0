@@ -299,9 +299,9 @@ public class GameManager : MonoBehaviour
 {
     foreach (Transform child in playerHandPanel) { Destroy(child.gameObject); }
 
-    float curveIntensity = 90f;
+    float curveIntensity = 60f;
     float spreadAngle = 20f; // Angle entre chaque carte
-    float horizontalSpacing = 45f; // Espace horizontal entre les cartes (si UI)
+    float horizontalSpacing = 50f; // Espace horizontal entre les cartes (si UI)
     int n = player.hand.Count;
     
     // Calcul du point de départ pour centrer l'éventail
@@ -310,7 +310,7 @@ public class GameManager : MonoBehaviour
 
     for (int i = 0; i < n; i++)
     {
-        float currentAngle = startAngle + (i * spreadAngle);
+        float currentAngle = startAngle + (i * (spreadAngle - i));
         float rad = currentAngle * Mathf.Deg2Rad;
         float yPos = Mathf.Cos(rad) * curveIntensity;
         GameObject specificPrefab = GetPrefabForCard(player.hand[i]);
