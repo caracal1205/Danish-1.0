@@ -235,7 +235,6 @@ public class GameManager : MonoBehaviour
     {
         Card c = deck[0];
         deck.RemoveAt(0);
-        ShowDrawPile();
         return c;
     }
 
