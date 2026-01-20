@@ -12,71 +12,45 @@ public class GameManager : MonoBehaviour
 
     private int currentPlayerIndex = 0;
 
-    // Références Canvas
-    public Transform BotHandPanel;
-    public Transform playerHandPanel;
+    [Header("Configuration des Panels")]
+    public Transform playerHandPanel; // Panel actif pour le joueur du tour
+    public Transform otherPlayerHandPanel; // Panel pour le joueur passif (facultatif)
     public Transform playerVisibleSlots;
     public Transform playerHiddenSlots;
     public Transform drawPilePos;
     public Transform discardPos;
     public Transform burnPilePos;
 
-    // Références Prefabs/UI
+    [Header("UI & Prefabs")]
     public GameObject[] allCardPrefabs;
     public Text pileText;
     public Text infoText;
-
     public Text drawText;
     public Button pickupButton;
 
-    // Règles de jeu
     private bool reversedRule = false;
-    private bool sameSuitRule = false; 
-    private Suit restrictedSuit;
-    private int minRankRequired;
 
     void Awake()
     {
-        Debug.Assert(playerHandPanel != null, "PlayerHandPanel manquant");
-        Debug.Assert(BotHandPanel != null, "BotHandPanel manquant");
+        Debug.Assert(playerHandPanel != null, "playerHandPanel manquant");
         Debug.Assert(drawPilePos != null, "drawPilePos manquant");
         Debug.Assert(discardPos != null, "discardPos manquant");
-        Debug.Assert(pileText != null, "pileText manquant");
-        Debug.Assert(infoText != null, "infoText manquant");
     }
 
     void Start()
     {
-        Debug.Log("<color=cyan>--- Initialisation du jeu de Bataille Norvégienne ---</color>");
         StartNewGame(); 
         StartTurn();
-    }
-
-    private GameObject GetPrefabForCard(Card card)
-    {
-        string targetName = $"{card.suit}_{card.rank}";
-        foreach (GameObject prefab in allCardPrefabs)
-        {
-            if(prefab != null && prefab.name.Equals(targetName, System.StringComparison.OrdinalIgnoreCase))
-            {
-                return prefab;
-            }
-        }
-        Debug.LogError($"Prefab pour {targetName} introuvable !");
-        return null;
     }
 
     public void StartNewGame()
     {
         deck = Deck.CreateStandard52();
-        Debug.Log($"[Deck] Création du paquet : {deck.Count} cartes.");
-        
         Deck.Shuffle(deck);
-        Debug.Log("[Deck] Paquet mélangé.");
 
         players.Clear();
-        players.Add(new Player("Ruben"));
-        players.Add(new Player("Timothy"));
+        players.Add(new Player("Joueur 1"));
+        players.Add(new Player("Joueur 2"));
 
         foreach (Player p in players)
         {
@@ -87,29 +61,34 @@ public class GameManager : MonoBehaviour
         burned.Clear();
         reversedRule = false;
 
-        Card firstCard = DrawFromDeck();
-        pile.Add(firstCard); 
-        Debug.Log($"[Pile] Première carte posée : {firstCard}.");
+        if (deck.Count > 0)
+        {
+            Card firstCard = DrawFromDeck();
+            pile.Add(firstCard);
+        }
 
-        UpdatePileText();
         UpdatePileVisuals();
     }
 
     private void DealInitialCards(Player p)
     {
-        // 3 cachées
         p.hidden.AddRange(deck.Take(3));
         deck.RemoveRange(0, 3);
-        
-        // 3 visibles
         p.visible.AddRange(deck.Take(3));
         deck.RemoveRange(0, 3);
-        
-        // 7 en main
         p.hand.AddRange(deck.Take(7));
         deck.RemoveRange(0, 7);
+    }
 
-        Debug.Log($"[Distribution] {p.Name} a reçu ses cartes (7 en main, 3 visibles, 3 cachées).");
+    private GameObject GetPrefabForCard(Card card)
+    {
+        string targetName = $"{card.suit}_{card.rank}";
+        foreach (GameObject prefab in allCardPrefabs)
+        {
+            if(prefab != null && prefab.name.Equals(targetName, System.StringComparison.OrdinalIgnoreCase))
+                return prefab;
+        }
+        return null;
     }
 
     public void OnCardClicked(CardUI clickedCard)
@@ -118,13 +97,10 @@ public class GameManager : MonoBehaviour
         
         if (!IsCardPlayable(clickedCard.card))
         {
-            Debug.Log($"[Action] {current.Name} a tenté de jouer {clickedCard.card}, mais ce n'est pas permis.");
-            infoText.text = "Carte non jouable !";
+            infoText.text = "Action impossible !";
             return;
         }
 
-        Debug.Log($"[Action] {current.Name} joue : <color=green>{clickedCard.card}</color>");
-        
         current.hand.Remove(clickedCard.card);
         pile.Add(clickedCard.card);
 
@@ -132,7 +108,6 @@ public class GameManager : MonoBehaviour
         
         if (current.HasNoCards)
         {
-            Debug.Log($"<color=yellow>[VICTOIRE] {current.Name} n'a plus de cartes et remporte la partie !</color>");
             infoText.text = $"{current.Name} a gagné !";
             return;
         }
@@ -144,110 +119,59 @@ public class GameManager : MonoBehaviour
     bool IsCardPlayable(Card card)
     {
         if (pile.Count == 0) return true;
-        
         Card top = pile.Last();
         int cardValue = (int)card.rank;
         int topValue = (int)top.rank;
 
         if (cardValue == 2 || cardValue == 3) return true; 
-
-        if (topValue == 7)
-        {
-            bool res = cardValue <= 7;
-            Debug.Log($"[Règle 7] Doit être <= 7. Joué: {cardValue}, Résultat: {res}");
-            return res;
-        }
-
+        if (topValue == 7) return cardValue <= 7;
         return cardValue >= topValue;
     }
 
     void ApplyCardEffect(Card card, Player player)
     {
         int cardValue = (int)card.rank;
-
         switch (cardValue)
         {
-            case 3:
-                Debug.Log($"[Effet] {player.Name} joue un 3 (Copie).");
-                if (pile.Count > 1) 
-                {
-                    Card previousCard = pile[pile.Count - 2]; 
-                    Debug.Log($"[Effet] Le 3 copie l'effet de : {previousCard.rank}");
-                    if ((int)previousCard.rank != 3) ApplyCardEffect(previousCard, player); 
-                }
+            case 10:
+                burned.AddRange(pile); 
+                pile.Clear();
+                // On reste sur le même joueur pour qu'il rejoue
+                currentPlayerIndex = (currentPlayerIndex - (reversedRule ? -1 : 1) + players.Count) % players.Count; 
                 break;
-
-            case 2:
-                Debug.Log($"[Effet] {player.Name} joue un 2. La pile est réinitialisée (n'importe quelle carte peut suivre).");
-                break;
-
-            case 6:
-                reversedRule = !reversedRule;
-                Debug.Log($"[Effet] {player.Name} joue un 6. Inversion du sens ! (Inversé = {reversedRule})");
-                break;
-
-            case 7:
-                Debug.Log($"[Effet] {player.Name} joue un 7. Le prochain joueur doit jouer <= 7.");
-                break;
-
             case 8:
-                Debug.Log($"[Effet] {player.Name} joue un 8. Le tour du prochain joueur est sauté !");
+                // Saute le prochain tour
                 int direction = reversedRule ? -1 : 1;
                 currentPlayerIndex = (currentPlayerIndex + direction) % players.Count;
                 if (currentPlayerIndex < 0) currentPlayerIndex += players.Count;
-                break;
-
-            case 10:
-                Debug.Log($"[Effet] {player.Name} joue un 10. LA PILE BRÛLE ({pile.Count} cartes retirées) !");
-                burned.AddRange(pile); 
-                pile.Clear();
-                UpdatePileVisuals();
-                ShowDiscard();
-                // Annule le changement de tour car le joueur rejoue
-                currentPlayerIndex = (currentPlayerIndex - (reversedRule ? -1 : 1) + players.Count) % players.Count; 
                 break;
         }
     }
 
     public void PickUpPile(Player player)
     {
-        Debug.Log($"[Ramassage] {player.Name} ramasse la pile de {pile.Count} cartes.");
+        if (pile.Count == 0) return;
         player.hand.AddRange(pile);
         pile.Clear();
-        UpdatePileVisuals();    
         NextTurn(); 
-    }
-
-    void DrawIfNeeded(Player player)
-    {
-        int initialCount = player.hand.Count;
-        while (player.hand.Count < 7 && deck.Count > 0) 
-        {
-            Card drawn = DrawFromDeck();
-            player.hand.Add(drawn);
-            Debug.Log($"[Pioche] {player.Name} pioche : {drawn}. (Reste dans deck: {deck.Count})");
-        }
-    }
-
-    Card DrawFromDeck()
-    {
-        Card c = deck[0];
-        deck.RemoveAt(0);
-        return c;
     }
 
     void StartTurn()
     {
         Player current = players[currentPlayerIndex];
-        Debug.Log($"<color=white>--- Début du tour : {current.Name} ---</color>");
-        infoText.text = $"Tour de : {current.Name}";
+        Player waiting = players[(currentPlayerIndex + 1) % players.Count];
         
+        infoText.text = $"C'est au tour de : {current.Name}";
+        
+        // Mise à jour de tous les visuels pour le joueur actuel
         ShowPlayerHand(current);
         ShowCardUpSide(current);
         ShowCardDownSide(current);
         ShowDrawPile();
         ShowDiscard();
-        ShowBotHand(players[(currentPlayerIndex + 1) % players.Count]); 
+        
+        // Optionnel : afficher le dos des cartes de l'adversaire
+        ShowOpponentBacks(waiting);
 
         pickupButton.onClick.RemoveAllListeners();
         pickupButton.onClick.AddListener(() => PickUpPile(current));
@@ -259,116 +183,78 @@ public class GameManager : MonoBehaviour
         currentPlayerIndex = (currentPlayerIndex + direction) % players.Count;
         if (currentPlayerIndex < 0) currentPlayerIndex += players.Count;
 
-        UpdatePileText();
         UpdatePileVisuals();
         StartTurn();
     }
 
-    void UpdatePileText()
-    {
-        if (pile.Count > 0)
-            pileText.text = "Pile : " + pile.Last();
-        else
-            pileText.text = "Pile vide";
-    }
-
     void UpdatePileVisuals()
     {
-        if (discardPos == null) return;
-
         foreach (Transform child in discardPos) { Destroy(child.gameObject); }
-
         if (pile.Count > 0)
         {
             Card topCard = pile.Last();
-            GameObject specificPrefab = GetPrefabForCard(topCard);
-            if (specificPrefab != null) 
+            GameObject prefab = GetPrefabForCard(topCard);
+            if (prefab != null) 
             {
-                GameObject cardGO = Instantiate(specificPrefab, discardPos);
+                GameObject cardGO = Instantiate(prefab, discardPos);
                 cardGO.transform.localPosition = Vector3.zero;
                 cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
                 cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
-
                 CardUI ui = cardGO.GetComponentInChildren<CardUI>();
                 if(ui != null) { ui.Setup(topCard, this); ui.DisableInteraction(); }
             }
         }
+        if (pileText != null) pileText.text = pile.Count > 0 ? $"Pile : {pile.Last()}" : "Pile vide";
     }
 
     void ShowPlayerHand(Player player)
-{
-    foreach (Transform child in playerHandPanel) { 
-        child.gameObject.SetActive(false);
-        Destroy(child.gameObject); }
-
-    float curveIntensity = 60f;
-    float spreadAngle = 20f; // Angle entre chaque carte
-    float horizontalSpacing = 50f; // Espace horizontal entre les cartes (si UI)
-    int n = player.hand.Count;
-    
-    // Calcul du point de départ pour centrer l'éventail
-    float startX = -horizontalSpacing * (n - 1) / 2;
-    float startAngle = -spreadAngle * (n - 1) / 2;
-
-    for (int i = 0; i < n; i++)
     {
-        float currentAngle = startAngle + (i * (spreadAngle - i));
-        float rad = currentAngle * Mathf.Deg2Rad;
-        float yPos = Mathf.Cos(rad) * curveIntensity;
-        GameObject specificPrefab = GetPrefabForCard(player.hand[i]);
-        if (specificPrefab == null) continue;
-        
-        GameObject cardGO = Instantiate(specificPrefab, playerHandPanel);
-        
-        // 1. CORRECTION DE L'ÉCHELLE
-        // Ajustez cette valeur (ex: 50 ou 100) jusqu'à ce que la taille soit correcte
-        cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
+        foreach (Transform child in playerHandPanel) { Destroy(child.gameObject); }
+        int n = player.hand.Count;
+        float spacing = 50f;
+        float startX = -spacing * (n - 1) / 2;
 
-        // 2. POSITIONNEMENT
-        // On décale les cartes horizontalement pour qu'elles ne soient pas toutes au même endroit
-        cardGO.transform.localPosition = new Vector3(startX + (i * horizontalSpacing), yPos, i * 0.1f);
-        
-        // 3. ROTATION (Éventail)
-        cardGO.transform.localRotation = Quaternion.Euler(0, 180, startAngle + (i * spreadAngle));
-        
-        CardUI ui = cardGO.GetComponentInChildren<CardUI>();
-        if(ui != null) 
+        for (int i = 0; i < n; i++)
         {
-            ui.Setup(player.hand[i], this); 
-            ui.button.onClick.AddListener(() => OnCardClicked(ui));
+            GameObject prefab = GetPrefabForCard(player.hand[i]);
+            if (prefab == null) continue;
+            
+            GameObject cardGO = Instantiate(prefab, playerHandPanel);
+            cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
+            cardGO.transform.localPosition = new Vector3(startX + (i * spacing), 0, i * -0.1f);
+            cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
+            
+            CardUI ui = cardGO.GetComponentInChildren<CardUI>();
+            if(ui != null) 
+            {
+                ui.Setup(player.hand[i], this); 
+                ui.button.onClick.AddListener(() => OnCardClicked(ui));
+            }
         }
     }
-}
 
     void ShowCardUpSide(Player player)
     {
         foreach (Transform child in playerVisibleSlots) { Destroy(child.gameObject); }
-        int n = player.visible.Count;
-
-        for (int i = 0; i < n ; i++)
+        for (int i = 0; i < player.visible.Count; i++)
         {
-            GameObject specificPrefab = GetPrefabForCard(player.visible[i]);
-
-            GameObject cardGO = Instantiate(specificPrefab, playerVisibleSlots);
-            cardGO.transform.localPosition = new Vector3(0, 50f, 0);
+            GameObject prefab = GetPrefabForCard(player.visible[i]);
+            GameObject cardGO = Instantiate(prefab, playerVisibleSlots);
+            cardGO.transform.localPosition = new Vector3(i * 45f, 0, 0);
             cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
             cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
         }
-
     }
 
     void ShowCardDownSide(Player player)
     {
-        foreach (Transform child in playerHiddenSlots) {Destroy(child.gameObject);}
-        int n = player.hidden.Count;
-
-        for (int i = 0; i < n ; i++)
+        foreach (Transform child in playerHiddenSlots) { Destroy(child.gameObject); }
+        for (int i = 0; i < player.hidden.Count; i++)
         {
-            GameObject specificPrefab = GetPrefabForCard(player.hidden[i]);
-
-            GameObject cardGO = Instantiate(specificPrefab, discardPos);
-            cardGO.transform.localPosition = new Vector3(0, 50f, 0);
-            cardGO.transform.localRotation = Quaternion.Euler(0, 0, 0);
+            GameObject prefab = GetPrefabForCard(player.hidden[i]);
+            GameObject cardGO = Instantiate(prefab, playerHiddenSlots);
+            cardGO.transform.localPosition = new Vector3(i * 45f, 0, 0);
+            cardGO.transform.localRotation = Quaternion.Euler(0, 0, 0); // Face cachée
             cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
         }
     }
@@ -376,51 +262,52 @@ public class GameManager : MonoBehaviour
     void ShowDrawPile()
     {
         foreach (Transform child in drawPilePos) { Destroy(child.gameObject); }
-        int n = deck.Count;
-
-        drawText.text = $"il reste {n} dans la pioche";
-
-        for (int i = 0; i < n; i ++)
+        if (drawText != null) drawText.text = $"Pioche : {deck.Count}";
+        
+        int visibleCount = Mathf.Min(deck.Count, 5); // On n'affiche que les 5 dernières pour les perfs
+        for (int i = 0; i < visibleCount; i++)
         {
-                GameObject specificPrefab = GetPrefabForCard(deck[i]);
-                if (specificPrefab == null) continue;
-
-                GameObject cardGO = Instantiate(specificPrefab, drawPilePos);
-
-                cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
-                cardGO.transform.localPosition =  Vector3.zero;
-                cardGO.transform.localRotation = Quaternion.Euler(0, 0, 0);
+            GameObject prefab = GetPrefabForCard(deck[i]);
+            GameObject cardGO = Instantiate(prefab, drawPilePos);
+            cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
+            cardGO.transform.localPosition = new Vector3(0, i * 0.5f, 0);
+            cardGO.transform.localRotation = Quaternion.Euler(0, 0, 0);
         }
     }
 
     void ShowDiscard()
-{
-    // 1. Toujours nettoyer l'emplacement avant de réafficher
-    foreach (Transform child in burnPilePos) { Destroy(child.gameObject); }
-
-    int n = burned.Count;
-    if(n == 0) return;
-
-    for (int i = 0; i < n; i++)
     {
-        
-        GameObject specificPrefab = GetPrefabForCard(burned[i]);
-        if (specificPrefab == null) continue;
+        foreach (Transform child in burnPilePos) { Destroy(child.gameObject); }
+        if (burned.Count == 0) return;
 
-        GameObject cardGO = Instantiate(specificPrefab, burnPilePos);
-
-        cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
-        cardGO.transform.localPosition = new Vector3(0, i * 5f, 0);
-        cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
-
+        Card lastBurned = burned.Last();
+        GameObject prefab = GetPrefabForCard(lastBurned);
+        if (prefab != null)
+        {
+            GameObject cardGO = Instantiate(prefab, burnPilePos);
+            cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
+            cardGO.transform.localPosition = Vector3.zero;
+            cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
+        }
     }
-}
-    
 
-
-    void ShowBotHand(Player bot)
+    void ShowOpponentBacks(Player opponent)
     {
-        foreach (Transform child in BotHandPanel) { Destroy(child.gameObject); }
-        // Logique visuelle du bot (dos des cartes) peut être ajoutée ici.
+        if (otherPlayerHandPanel == null) return;
+        foreach (Transform child in otherPlayerHandPanel) { Destroy(child.gameObject); }
+        // Ici on pourrait instancier des prefabs de dos de cartes pour l'immersion
+    }
+
+    void DrawIfNeeded(Player player)
+    {
+        while (player.hand.Count < 7 && deck.Count > 0) 
+            player.hand.Add(DrawFromDeck());
+    }
+
+    Card DrawFromDeck()
+    {
+        Card c = deck[0];
+        deck.RemoveAt(0);
+        return c;
     }
 }
