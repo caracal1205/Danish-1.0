@@ -128,8 +128,6 @@ public class GameManager : MonoBehaviour
         current.hand.Remove(clickedCard.card);
         pile.Add(clickedCard.card);
         
-        ShowPlayerHand(current); 
-        ShowDrawPile();
         ApplyCardEffect(clickedCard.card, current);
         
         if (current.HasNoCards)
@@ -216,9 +214,7 @@ public class GameManager : MonoBehaviour
         Debug.Log($"[Ramassage] {player.Name} ramasse la pile de {pile.Count} cartes.");
         player.hand.AddRange(pile);
         pile.Clear();
-        
-        ShowPlayerHand(player);
-        UpdatePileVisuals();
+        UpdatePileVisuals();    
         NextTurn(); 
     }
 
@@ -250,8 +246,8 @@ public class GameManager : MonoBehaviour
         ShowPlayerHand(current);
         ShowDrawPile();
         ShowDiscard();
-        ShowCardUpSide();
-        ShowCardDownSide();
+        ShowCardUpSide(current);
+        ShowCardDownSide(current);
         ShowBotHand(players[(currentPlayerIndex + 1) % players.Count]); 
 
         pickupButton.onClick.RemoveAllListeners();
@@ -302,7 +298,9 @@ public class GameManager : MonoBehaviour
 
     void ShowPlayerHand(Player player)
 {
-    foreach (Transform child in playerHandPanel) { Destroy(child.gameObject); }
+    foreach (Transform child in playerHandPanel) { 
+        child.gameObject.SetActive(false);
+        Destroy(child.gameObject); }
 
     float curveIntensity = 90f;
     float spreadAngle = 20f; // Angle entre chaque carte
@@ -362,12 +360,12 @@ public class GameManager : MonoBehaviour
 
     void ShowCardDownSide(Player player)
     {
-        foreach (Trasform child in cardDownSide) {Destroy(child.gameObject);}
+        foreach (Transform child in cardDownSide) {Destroy(child.gameObject);}
         int n = player.hidden.Count;
 
-        for (int i = 0; i < n ; i++);
+        for (int i = 0; i < n ; i++)
         {
-            GameObject specificPrefab = GetPrefabForCard(player.hiddens[i]);
+            GameObject specificPrefab = GetPrefabForCard(player.hidden[i]);
 
             GameObject cardGO = Instantiate(specificPrefab, discardPos);
             cardGO.transform.localPosition = new Vector3(0, 50f, 0);
@@ -391,7 +389,7 @@ public class GameManager : MonoBehaviour
                 GameObject cardGO = Instantiate(specificPrefab, drawPilePos);
 
                 cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
-                cardGO.transform.localPosition = new Vector3(startX + (i * horizontalSpacing), yPos, i * 0.1f);
+                cardGO.transform.localPosition =  Vector3.zero;
                 cardGO.transform.localRotation = Quaternion.Euler(0, 0, 0);
         }
     }
