@@ -341,6 +341,7 @@ public class GameManager : MonoBehaviour
 
     void ShowDrawPile()
     {
+        foreach (Transform child in drawPilePos) { Destroy(child.gameObject); }
         int n = deck.Count;
 
         drawText.text = $"il reste {n} dans la pioche";
@@ -364,20 +365,20 @@ public class GameManager : MonoBehaviour
     foreach (Transform child in burnPilePos) { Destroy(child.gameObject); }
 
     int n = burned.Count;
+    if(n == 0) return;
 
     for (int i = 0; i < n; i++)
     {
-        // CORRECTION : Utilisez burned[i] au lieu de deck[i]
+        
         GameObject specificPrefab = GetPrefabForCard(burned[i]);
         if (specificPrefab == null) continue;
 
         GameObject cardGO = Instantiate(specificPrefab, burnPilePos);
 
         cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
-        
-        // Optionnel : un petit décalage pour voir l'épaisseur du tas
-        cardGO.transform.localPosition = new Vector3(0, i * 0.1f, 0);
+        cardGO.transform.localPosition = new Vector3(0, i * 5f, 0);
         cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
+        
     }
 }
     
