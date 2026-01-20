@@ -97,7 +97,6 @@ public class GameManager : MonoBehaviour
         ShowDiscard();
         
         // Optionnel : afficher le dos des cartes de l'adversaire
-        ShowOpponentBacks(waiting);
 
         pickupButton.onClick.RemoveAllListeners();
         pickupButton.onClick.AddListener(() => PickUpPile(current));
@@ -211,7 +210,7 @@ public class GameManager : MonoBehaviour
             GameObject specificPrefab = GetPrefabForCard(player.visible[i]);
 
             GameObject cardGO = Instantiate(specificPrefab, playerVisibleSlots);
-            cardGO.transform.localPosition = new Vector3(0, 50f, 0);
+            cardGO.transform.localPosition = new Vector3(i * 100f, 50f, 0);
             cardGO.transform.localRotation = Quaternion.Euler(0, 180, 0);
             cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
         }
