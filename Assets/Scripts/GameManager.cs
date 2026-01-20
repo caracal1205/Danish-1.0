@@ -125,6 +125,7 @@ public class GameManager : MonoBehaviour
         pile.Add(clickedCard.card);
         
         ShowPlayerHand(current); 
+        ShowDrawPile();
         ApplyCardEffect(clickedCard.card, current);
         
         if (current.HasNoCards)
@@ -241,6 +242,7 @@ public class GameManager : MonoBehaviour
         infoText.text = $"Tour de : {current.Name}";
         
         ShowPlayerHand(current);
+        ShowDrawPile();
         ShowBotHand(players[(currentPlayerIndex + 1) % players.Count]); 
 
         pickupButton.onClick.RemoveAllListeners();
@@ -281,8 +283,7 @@ public class GameManager : MonoBehaviour
                 GameObject cardGO = Instantiate(specificPrefab, discardPos);
                 cardGO.transform.localPosition = Vector3.zero;
                 cardGO.transform.localRotation = Quaternion.identity;
-                cardGO.transform.localScale = Vector3.one;
-
+                cardGO.transform.localScale = new Vector3(30f, 30f, 30f);
                 CardUI ui = cardGO.GetComponentInChildren<CardUI>();
                 if(ui != null) { ui.Setup(topCard, this); ui.DisableInteraction(); }
             }
@@ -331,6 +332,23 @@ public class GameManager : MonoBehaviour
         }
     }
 }
+
+    void ShowDrawPile()
+    {
+        int n = deck.Count;
+
+        for (int i; i < n; i ++)
+        {
+                GameObject specificPrefab = GetPrefabForCard(deck[i]);
+                if (specificPrefab == null) continue;
+
+                GameObject cardGO = Instantiate(specificPrefab, drawPilePos);
+
+                cardGO.transform.localScale = new Vector3(30f, 30f, 30f); 
+                cardGO.transform.localPosition = new Vector3(startX + (i * horizontalSpacing), yPos, i * 0.1f);
+                cardGO.transform.localRotation = Quaternion.Euler(0, 0, 0);
+        }
+    }
 
 
     void ShowBotHand(Player bot)
